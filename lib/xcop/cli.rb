@@ -12,9 +12,17 @@ require_relative 'document'
 # Copyright:: Copyright (c) 2017-2026 Yegor Bugayenko
 # License:: MIT
 class Xcop::CLI
+  # Extensions recognized when a directory is passed as input.
+  EXTENSIONS = %w[xml xsd xhtml xsl html].freeze
+
   def initialize(files, nocolor: false)
-    @files = files
+    @files = files.flat_map { |f| File.directory?(f) ? Xcop::CLI.expand(f) : [f] }
     @nocolor = nocolor
+  end
+
+  # Recursively collect XML-like files inside a directory.
+  def self.expand(dir)
+    EXTENSIONS.flat_map { |ext| Dir.glob(File.join(dir, '**', "*.#{ext}")) }.sort
   end
 
   def run

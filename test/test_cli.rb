@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: Copyright (c) 2017-2026 Yegor Bugayenko
 # SPDX-License-Identifier: MIT
 
+require 'fileutils'
 require 'minitest/autorun'
 require 'tmpdir'
 require_relative '../lib/xcop/cli'
@@ -133,6 +134,47 @@ class CLITest < Minitest::Test
         original_content,
         File.read(f),
         "Expected to fix invalid file - '#{f}'"
+      )
+    end
+  end
+
+  def test_run_on_directory_processes_xml_files_recursively
+    Dir.mktmpdir 'test_dir_input' do |dir|
+      nested = File.join(dir, 'nested')
+      FileUtils.mkdir_p(nested)
+      f1 = File.join(dir, 'top.xml')
+      f2 = File.join(nested, 'deep.xsl')
+      File.write(f1, "<?xml version=\"1.0\"?>\n<root>\n  <item>1</item>\n</root>\n")
+      File.write(f2, "<?xml version=\"1.0\"?>\n<root>\n  <item>2</item>\n</root>\n")
+      processed = []
+      cli = Xcop::CLI.new([dir])
+      cli.run { |file| processed << file }
+      assert_includes(
+        processed,
+        f1,
+        "Expected to include '#{f1}' when directory '#{dir}' is given"
+      )
+      assert_includes(
+        processed,
+        f2,
+        "Expected to include '#{f2}' when directory '#{dir}' is given"
+      )
+    end
+  end
+
+  def test_run_on_directory_ignores_non_xml_files
+    Dir.mktmpdir 'test_dir_skip' do |dir|
+      xml = File.join(dir, 'good.xml')
+      txt = File.join(dir, 'notes.txt')
+      File.write(xml, "<?xml version=\"1.0\"?>\n<root>\n  <item>1</item>\n</root>\n")
+      File.write(txt, 'not xml')
+      processed = []
+      cli = Xcop::CLI.new([dir])
+      cli.run { |file| processed << file }
+      assert_equal(
+        [xml],
+        processed,
+        "Expected only '#{xml}' to be processed, got '#{processed}'"
       )
     end
   end

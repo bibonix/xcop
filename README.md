@@ -46,12 +46,13 @@ can ask it to "beautify" them using the `--fix` option:
 xcop --fix broken-file.xml
 ```
 
-To fix all files in a directory, you can do the following
-([this won't work](https://askubuntu.com/questions/343727/) if your file
-names contain spaces):
+You can also pass a directory as an argument. In that case `xcop` will
+recursively find every `.xml`, `.xsd`, `.xhtml`, `.xsl`, and `.html`
+file inside it:
 
 ```bash
-xcop --fix $(find . -name '*.xml')
+xcop .
+xcop --fix src/resources
 ```
 
 ## Defaults
